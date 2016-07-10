@@ -7,14 +7,17 @@ KEY_RIGHT=1
 KEY_UP=2
 KEY_DOWN=3
 
-SCREEN_WIDTH=128
-SCREEN_HEIGHT=128
+SCREEN_WIDTH=128.0
+SCREEN_HEIGHT=128.0
 
-MAP_WIDTH=24
-MAP_HEIGHT=24
+MAP_WIDTH=24.0
+MAP_HEIGHT=24.0
 
-MOVE_SPEED = 5 * 1/60
-ROTATE_SPEED = 3 * 1/60
+MOVE_SPEED = 5 * 1/30
+ROTATE_SPEED = 3 * 1/30
+
+ROOF_COLOR=5
+FLOOR_COLOR=6
 
 WALL_COLORS = {
   {15, 9},
@@ -51,11 +54,13 @@ LEVEL_MAP={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 }
 
-pos_x=22
-pos_y=12
-dir_x=-1
-dir_y=0
-plane_x=0
+pos_x=22.0
+pos_y=12.0
+
+dir_x=-1.0
+dir_y=0.0
+
+plane_x=0.0
 plane_y=0.66
   
 function _update() 
@@ -73,34 +78,25 @@ function _update()
 end
 
 function _draw()
-  rectfill(0,0,SCREEN_WIDTH-1,(SCREEN_HEIGHT-1)/2,5)
-  rectfill(0,(SCREEN_HEIGHT-1)/2,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,6)
+  rectfill(0,0,SCREEN_WIDTH-1,(SCREEN_HEIGHT-1)/2,ROOF_COLOR)
+  rectfill(0,(SCREEN_HEIGHT-1)/2,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,FLOOR_COLOR)
 
-  for x=0,SCREEN_WIDTH-1 do
-    camera_x = 2 * x / SCREEN_WIDTH - 1
-    --fix me
-    if camera_x == 0 then
-      camera_x = 0.1
-    end
+  for x=0.0,SCREEN_WIDTH-1.0 do
+    camera_x = ((2.0 * x) / SCREEN_WIDTH) -1.0
     raypos_x = pos_x
     raypos_y = pos_y
     raydir_x = dir_x + plane_x * camera_x
     raydir_y = dir_y + plane_y * camera_x
     map_x = round(raypos_x)
     map_y = round(raypos_y)
-    sidedist_x = 0
-    sidedist_y = 0
     deltadist_x = sqrt(1 + raydir_y^2 / raydir_x^2)
     deltadist_y = sqrt(1 + raydir_x^2 / raydir_y^2)
-    perpwall_dist = 0
 
-    step_x = 0
-    step_y = 0
-
+    step_x=0 step_y=0 sidedist_x=0 sidedist_y=0
     if raydir_x < 0 then
       step_x = -1
       sidedist_x = (raypos_x - map_x) * deltadist_x
-    else
+    elseif raydir_x > 0 then
       step_x = 1
       sidedist_x = (map_x + 1 - raypos_x) * deltadist_x
     end
@@ -108,7 +104,7 @@ function _draw()
     if raydir_y < 0 then
       step_y = -1
       sidedist_y = (raypos_y - map_y) * deltadist_y
-    else
+    elseif raydir_y > 0 then
       step_y = 1
       sidedist_y = (map_y + 1 - raypos_y) * deltadist_y
     end
@@ -129,6 +125,7 @@ function _draw()
       if LEVEL_MAP[map_x+1][map_y+1] > 0 then hit = 1 end
     end
 
+    perpwall_dist = 0
     if side == 0 then
       perpwall_dist = (map_x - raypos_x + (1 - step_x) / 2) / raydir_x
     else
@@ -142,9 +139,6 @@ function _draw()
     wall_type = LEVEL_MAP[map_x+1][map_y+1]
     wall_color = WALL_COLORS[wall_type][side+1]
 
-    if x > 60 and x < 70 then
-      printh('x:'..x..', dist:'..perpwall_dist..', map_x:'..map_x..', map_y:'..map_y..', step_x:'..step_x..', step_y:'..step_y..', sidedist_x:'..sidedist_x..', sidedist_y:'..sidedist_y..', deltadist_x:'..deltadist_x..', deltadist_y:'..deltadist_y..', raydir_x:'..raydir_x..', raydir_y:'..raydir_y)
-    end
     line(x, draw_start, x, draw_end, wall_color)
   end
 
