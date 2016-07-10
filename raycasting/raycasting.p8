@@ -59,7 +59,6 @@ plane_x=0
 plane_y=0.66
   
 function _update() 
-
   if btn(KEY_UP) then
     move(MOVE_SPEED)
   elseif btn(KEY_DOWN) then
@@ -74,9 +73,15 @@ function _update()
 end
 
 function _draw()
-  rectfill(0,0,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,0)
-  for x=1,SCREEN_WIDTH do
+  rectfill(0,0,SCREEN_WIDTH-1,(SCREEN_HEIGHT-1)/2,5)
+  rectfill(0,(SCREEN_HEIGHT-1)/2,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,6)
+
+  for x=0,SCREEN_WIDTH-1 do
     camera_x = 2 * x / SCREEN_WIDTH - 1
+    --fix me
+    if camera_x == 0 then
+      camera_x = 0.1
+    end
     raypos_x = pos_x
     raypos_y = pos_y
     raydir_x = dir_x + plane_x * camera_x
@@ -91,9 +96,6 @@ function _draw()
 
     step_x = 0
     step_y = 0
-
-    hit = 0
-    side = 0
 
     if raydir_x < 0 then
       step_x = -1
@@ -111,6 +113,8 @@ function _draw()
       sidedist_y = (map_y + 1 - raypos_y) * deltadist_y
     end
 
+    side = 0
+    hit = 0
     while hit == 0 do
       if sidedist_x < sidedist_y then
         sidedist_x += deltadist_x
@@ -122,7 +126,7 @@ function _draw()
         side = 1
       end
 
-      if LEVEL_MAP[map_x][map_y] > 0 then hit = 1 end
+      if LEVEL_MAP[map_x+1][map_y+1] > 0 then hit = 1 end
     end
 
     if side == 0 then
@@ -135,9 +139,12 @@ function _draw()
     draw_start = max(-line_height / 2 + SCREEN_HEIGHT / 2, 0)
     draw_end = min(line_height / 2 + SCREEN_HEIGHT / 2, SCREEN_HEIGHT-1)
 
-    wall_type = LEVEL_MAP[map_x][map_y]
+    wall_type = LEVEL_MAP[map_x+1][map_y+1]
     wall_color = WALL_COLORS[wall_type][side+1]
 
+    if x > 60 and x < 70 then
+      printh('x:'..x..', dist:'..perpwall_dist..', map_x:'..map_x..', map_y:'..map_y..', step_x:'..step_x..', step_y:'..step_y..', sidedist_x:'..sidedist_x..', sidedist_y:'..sidedist_y..', deltadist_x:'..deltadist_x..', deltadist_y:'..deltadist_y..', raydir_x:'..raydir_x..', raydir_y:'..raydir_y)
+    end
     line(x, draw_start, x, draw_end, wall_color)
   end
 
