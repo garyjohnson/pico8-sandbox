@@ -19,8 +19,16 @@ dir_x=-1
 dir_y=0
 plane_x=0
 plane_y=0.66
-time=0
-old_time=0
+move_speed = 5 * 1/60
+rotate_speed = 3 * 1/60
+
+wall_colors = {
+  {15, 9},
+  {12, 1},
+  {13, 2},
+  {11, 3},
+  {6, 5},
+}
 
 level_map={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -49,40 +57,32 @@ level_map={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 }
 
-function _init()
+function move(speed)
+  if level_map[flr(pos_x + dir_x * speed)+1][flr(pos_y)+1] == 0 then pos_x += dir_x * speed end
+  if level_map[flr(pos_x)+1][flr(pos_y + dir_y * speed)+1] == 0 then pos_y += dir_y * speed end
+end
+
+function rotate(speed)
+  olddir_x = dir_x
+  dir_x = dir_x + cos(speed) - dir_y * sin(speed)
+  dir_y = olddir_x * sin(speed) + dir_y * cos(speed) 
+  oldplane_x = plane_x
+  plane_x = plane_x * cos(speed) - plane_y * sin(speed)
+  plane_y = oldplane_x * sin(speed) + plane_y * cos(speed)
 end
   
 function _update() 
-  move_speed = 5 * 1/60
-  rotate_speed = 3 * 1/60
 
-  if (btn(KEY_UP)) then
-    printh('up')
-    if (level_map[flr(pos_x + dir_x * move_speed)+1][flr(pos_y)+1] == 0) then pos_x += dir_x * move_speed end
-    if (level_map[flr(pos_x)+1][flr(pos_y + dir_y * move_speed)+1] == 0) then pos_y += dir_y * move_speed end
+  if btn(KEY_UP) then
+    move(move_speed)
+  elseif btn(KEY_DOWN) then
+    move(-move_speed)
   end
-  if (btn(KEY_DOWN)) then
-    printh('down')
-    if (level_map[flr(pos_x - dir_x * move_speed)+1][flr(pos_y)+1] == 0) then pos_x -= dir_x * move_speed end
-    if (level_map[flr(pos_x)+1][flr(pos_y - dir_y * move_speed)+1] == 0) then pos_y -= dir_y * move_speed end
-  end
-  if (btn(KEY_LEFT)) then
-    printh('left')
-    olddir_x = dir_x
-    dir_x = dir_x + cos(-rotate_speed) - dir_y * sin(-rotate_speed)
-    dir_y = olddir_x * sin(-rotate_speed) + dir_y * cos(-rotate_speed) 
-    oldplane_x = plane_x
-    plane_x = plane_x * cos(-rotate_speed) - plane_y * sin(-rotate_speed)
-    plane_y = oldplane_x * sin(-rotate_speed) + plane_y * cos(-rotate_speed)
-  end
-  if (btn(KEY_RIGHT)) then
-    printh('right')
-    olddir_x = dir_x
-    dir_x = dir_x + cos(rotate_speed) - dir_y * sin(rotate_speed)
-    dir_y = olddir_x * sin(rotate_speed) + dir_y * cos(rotate_speed) 
-    oldplane_x = plane_x
-    plane_x = plane_x * cos(rotate_speed) - plane_y * sin(rotate_speed)
-    plane_y = oldplane_x * sin(rotate_speed) + plane_y * cos(rotate_speed)
+
+  if btn(KEY_LEFT) then
+    rotate(-rotate_speed)
+  elseif btn(KEY_RIGHT) then
+    rotate(rotate_speed)
   end
 end
 
@@ -108,7 +108,7 @@ function _draw()
     hit = 0
     side = 0
 
-    if (raydir_x < 0) then
+    if raydir_x < 0 then
       step_x = -1
       sidedist_x = (raypos_x - map_x) * deltadist_x
     else
@@ -116,7 +116,7 @@ function _draw()
       sidedist_x = (map_x + 1 - raypos_x) * deltadist_x
     end
     
-    if (raydir_y < 0) then
+    if raydir_y < 0 then
       step_y = -1
       sidedist_y = (raypos_y - map_y) * deltadist_y
     else
@@ -124,8 +124,8 @@ function _draw()
       sidedist_y = (map_y + 1 - raypos_y) * deltadist_y
     end
 
-    while (hit == 0) do
-      if (sidedist_x < sidedist_y) then
+    while hit == 0 do
+      if sidedist_x < sidedist_y then
         sidedist_x += deltadist_x
         map_x += step_x
         side = 0
@@ -135,31 +135,18 @@ function _draw()
         side = 1
       end
 
-      if (level_map[map_x][map_y] > 0) then 
-        hit = 1
-      end
+      if level_map[map_x][map_y] > 0 then hit = 1 end
     end
 
-    if (side == 0) then
+    if side == 0 then
       perpwall_dist = (map_x - raypos_x + (1 - step_x) / 2) / raydir_x
     else
       perpwall_dist = (map_y - raypos_y + (1 - step_y) / 2) / raydir_y
     end
 
     line_height = flr(screen_height / perpwall_dist)
-    --printh("lineheight "..line_height)
     draw_start = max(-line_height / 2 + screen_height / 2, 0)
     draw_end = min(line_height / 2 + screen_height / 2, screen_height-1)
-
-    --printh("x"..x.."y1"..draw_start.."y2"..draw_end)
-
-    wall_colors = {
-      {15, 9},
-      {12, 1},
-      {13, 2},
-      {11, 3},
-      {6, 5},
-    }
 
     wall_type = level_map[map_x][map_y]
     wall_color = wall_colors[wall_type][side+1]
