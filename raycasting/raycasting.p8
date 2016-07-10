@@ -2,14 +2,48 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
-width=128
-height=128
+screen_width=128
+screen_height=128
 
-level_map={{1,1,1,1,1},
-           {1,0,0,0,1},
-           {1,0,0,0,1},
-           {1,0,0,0,1},
-           {1,1,1,1,1}}
+map_width=24
+map_height=24
+
+position_x=22
+position_y=12
+direction_x=-1
+direction_y=0
+plane_x=0
+plane_y=0.66
+time=0
+old_time=0
+
+
+level_map={
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
+  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1},
+  {1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+  {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+}
 
 function _init()
 end
@@ -18,6 +52,74 @@ function _update()
 end
 
 function _draw()
+  rectfill(0,0,screen_width-1,screen_height-1,0)
+  for x=1,screen_width do
+    camera_x = 2 * x / screen_width - 1
+    raypos_x = position_x
+    raypos_y = position_y
+    raydir_x = direction_x + plane_x * camera_x
+    raydir_y = direction_y + plane_y * camera_x
+    map_x = flr(raypos_x)
+    map_y = flr(raypos_y)
+    sidedist_x = 0
+    sidedist_y = 0
+    deltadist_x = sqrt(1 + raydir_y^2 / raydir_x^2)
+    deltadist_y = sqrt(1 + raydir_x^2 / raydir_y^2)
+    perpwall_dist = 0
+
+    step_x = 0
+    step_y = 0
+
+    hit = 0
+    side = 0
+
+    if (raydir_x < 0) then
+      step_x = -1
+      sidedist_x = (raypos_x - map_x) * deltadist_x
+    else
+      step_x = 1
+      sidedist_x = (map_x + 1 - raypos_x) * deltadist_x
+    end
+    
+    if (raydir_y < 0) then
+      step_y = -1
+      sidedist_y = (raypos_y - map_y) * deltadist_y
+    else
+      step_y = 1
+      sidedist_y = (map_y + 1 - raypos_y) * deltadist_y
+    end
+
+    while (hit == 0) do
+      if (sidedist_x < sidedist_y) then
+        sidedist_x += deltadist_x
+        map_x += step_x
+        side = 0
+      else
+        sidedist_y += deltadist_y
+        map_y += step_y
+        side = 1
+      end
+
+      if (level_map[map_x][map_y] > 0) then 
+        hit = 1
+      end
+    end
+
+    if (side == 0) then
+      perpwall_dist = (map_x - raypos_x + (1 - step_x) / 2) / raydir_x
+    else
+      perpwall_dist = (map_y - raypos_y + (1 - step_y) / 2) / raydir_y
+    end
+
+    line_height = flr(screen_height / perpwall_dist)
+    --printh("lineheight "..line_height)
+    draw_start = max(-line_height / 2 + screen_height / 2, 0)
+    draw_end = min(line_height / 2 + screen_height / 2, screen_height-1)
+
+    --printh("x"..x.."y1"..draw_start.."y2"..draw_end)
+    line(x, draw_start, x, draw_end, level_map[map_x][map_y])
+  end
+
 end
 
 __gfx__
