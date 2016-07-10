@@ -2,21 +2,25 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
+KEY_LEFT=0
+KEY_RIGHT=1
+KEY_UP=2
+KEY_DOWN=3
+
 screen_width=128
 screen_height=128
 
 map_width=24
 map_height=24
 
-position_x=22
-position_y=12
-direction_x=-1
-direction_y=0
+pos_x=22
+pos_y=12
+dir_x=-1
+dir_y=0
 plane_x=0
 plane_y=0.66
 time=0
 old_time=0
-
 
 level_map={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -49,16 +53,47 @@ function _init()
 end
   
 function _update() 
+  move_speed = 5 * 1/60
+  rotate_speed = 3 * 1/60
+
+  if (btn(KEY_UP)) then
+    printh('up')
+    if (level_map[flr(pos_x + dir_x * move_speed)+1][flr(pos_y)+1] == 0) then pos_x += dir_x * move_speed end
+    if (level_map[flr(pos_x)+1][flr(pos_y + dir_y * move_speed)+1] == 0) then pos_y += dir_y * move_speed end
+  end
+  if (btn(KEY_DOWN)) then
+    printh('down')
+    if (level_map[flr(pos_x - dir_x * move_speed)+1][flr(pos_y)+1] == 0) then pos_x -= dir_x * move_speed end
+    if (level_map[flr(pos_x)+1][flr(pos_y - dir_y * move_speed)+1] == 0) then pos_y -= dir_y * move_speed end
+  end
+  if (btn(KEY_LEFT)) then
+    printh('left')
+    olddir_x = dir_x
+    dir_x = dir_x + cos(-rotate_speed) - dir_y * sin(-rotate_speed)
+    dir_y = olddir_x * sin(-rotate_speed) + dir_y * cos(-rotate_speed) 
+    oldplane_x = plane_x
+    plane_x = plane_x * cos(-rotate_speed) - plane_y * sin(-rotate_speed)
+    plane_y = oldplane_x * sin(-rotate_speed) + plane_y * cos(-rotate_speed)
+  end
+  if (btn(KEY_RIGHT)) then
+    printh('right')
+    olddir_x = dir_x
+    dir_x = dir_x + cos(rotate_speed) - dir_y * sin(rotate_speed)
+    dir_y = olddir_x * sin(rotate_speed) + dir_y * cos(rotate_speed) 
+    oldplane_x = plane_x
+    plane_x = plane_x * cos(rotate_speed) - plane_y * sin(rotate_speed)
+    plane_y = oldplane_x * sin(rotate_speed) + plane_y * cos(rotate_speed)
+  end
 end
 
 function _draw()
   rectfill(0,0,screen_width-1,screen_height-1,0)
   for x=1,screen_width do
     camera_x = 2 * x / screen_width - 1
-    raypos_x = position_x
-    raypos_y = position_y
-    raydir_x = direction_x + plane_x * camera_x
-    raydir_y = direction_y + plane_y * camera_x
+    raypos_x = pos_x
+    raypos_y = pos_y
+    raydir_x = dir_x + plane_x * camera_x
+    raydir_y = dir_y + plane_y * camera_x
     map_x = flr(raypos_x)
     map_y = flr(raypos_y)
     sidedist_x = 0
@@ -117,7 +152,19 @@ function _draw()
     draw_end = min(line_height / 2 + screen_height / 2, screen_height-1)
 
     --printh("x"..x.."y1"..draw_start.."y2"..draw_end)
-    line(x, draw_start, x, draw_end, level_map[map_x][map_y])
+
+    wall_colors = {
+      {15, 9},
+      {12, 1},
+      {13, 2},
+      {11, 3},
+      {6, 5},
+    }
+
+    wall_type = level_map[map_x][map_y]
+    wall_color = wall_colors[wall_type][side+1]
+
+    line(x, draw_start, x, draw_end, wall_color)
   end
 
 end
