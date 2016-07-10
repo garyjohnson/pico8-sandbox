@@ -7,22 +7,16 @@ KEY_RIGHT=1
 KEY_UP=2
 KEY_DOWN=3
 
-screen_width=128
-screen_height=128
+SCREEN_WIDTH=128
+SCREEN_HEIGHT=128
 
-map_width=24
-map_height=24
+MAP_WIDTH=24
+MAP_HEIGHT=24
 
-pos_x=22
-pos_y=12
-dir_x=-1
-dir_y=0
-plane_x=0
-plane_y=0.66
-move_speed = 5 * 1/60
-rotate_speed = 3 * 1/60
+MOVE_SPEED = 5 * 1/60
+ROTATE_SPEED = 3 * 1/60
 
-wall_colors = {
+WALL_COLORS = {
   {15, 9},
   {12, 1},
   {13, 2},
@@ -30,7 +24,7 @@ wall_colors = {
   {6, 5},
 }
 
-level_map={
+LEVEL_MAP={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
   {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
@@ -57,45 +51,38 @@ level_map={
   {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
 }
 
-function move(speed)
-  if level_map[flr(pos_x + dir_x * speed)+1][flr(pos_y)+1] == 0 then pos_x += dir_x * speed end
-  if level_map[flr(pos_x)+1][flr(pos_y + dir_y * speed)+1] == 0 then pos_y += dir_y * speed end
-end
-
-function rotate(speed)
-  olddir_x = dir_x
-  dir_x = dir_x + cos(speed) - dir_y * sin(speed)
-  dir_y = olddir_x * sin(speed) + dir_y * cos(speed) 
-  oldplane_x = plane_x
-  plane_x = plane_x * cos(speed) - plane_y * sin(speed)
-  plane_y = oldplane_x * sin(speed) + plane_y * cos(speed)
-end
+pos_x=22
+pos_y=12
+dir_x=-1
+dir_y=0
+plane_x=0
+plane_y=0.66
   
 function _update() 
 
   if btn(KEY_UP) then
-    move(move_speed)
+    move(MOVE_SPEED)
   elseif btn(KEY_DOWN) then
-    move(-move_speed)
+    move(-MOVE_SPEED)
   end
 
   if btn(KEY_LEFT) then
-    rotate(-rotate_speed)
+    rotate(-ROTATE_SPEED)
   elseif btn(KEY_RIGHT) then
-    rotate(rotate_speed)
+    rotate(ROTATE_SPEED)
   end
 end
 
 function _draw()
-  rectfill(0,0,screen_width-1,screen_height-1,0)
-  for x=1,screen_width do
-    camera_x = 2 * x / screen_width - 1
+  rectfill(0,0,SCREEN_WIDTH-1,SCREEN_HEIGHT-1,0)
+  for x=1,SCREEN_WIDTH do
+    camera_x = 2 * x / SCREEN_WIDTH - 1
     raypos_x = pos_x
     raypos_y = pos_y
     raydir_x = dir_x + plane_x * camera_x
     raydir_y = dir_y + plane_y * camera_x
-    map_x = flr(raypos_x)
-    map_y = flr(raypos_y)
+    map_x = round(raypos_x)
+    map_y = round(raypos_y)
     sidedist_x = 0
     sidedist_y = 0
     deltadist_x = sqrt(1 + raydir_y^2 / raydir_x^2)
@@ -135,7 +122,7 @@ function _draw()
         side = 1
       end
 
-      if level_map[map_x][map_y] > 0 then hit = 1 end
+      if LEVEL_MAP[map_x][map_y] > 0 then hit = 1 end
     end
 
     if side == 0 then
@@ -144,16 +131,38 @@ function _draw()
       perpwall_dist = (map_y - raypos_y + (1 - step_y) / 2) / raydir_y
     end
 
-    line_height = flr(screen_height / perpwall_dist)
-    draw_start = max(-line_height / 2 + screen_height / 2, 0)
-    draw_end = min(line_height / 2 + screen_height / 2, screen_height-1)
+    line_height = round(SCREEN_HEIGHT / perpwall_dist)
+    draw_start = max(-line_height / 2 + SCREEN_HEIGHT / 2, 0)
+    draw_end = min(line_height / 2 + SCREEN_HEIGHT / 2, SCREEN_HEIGHT-1)
 
-    wall_type = level_map[map_x][map_y]
-    wall_color = wall_colors[wall_type][side+1]
+    wall_type = LEVEL_MAP[map_x][map_y]
+    wall_color = WALL_COLORS[wall_type][side+1]
 
     line(x, draw_start, x, draw_end, wall_color)
   end
 
+end
+
+function move(speed)
+  if LEVEL_MAP[round(pos_x + dir_x * speed)+1][round(pos_y)+1] == 0 then pos_x += dir_x * speed end
+  if LEVEL_MAP[round(pos_x)+1][round(pos_y + dir_y * speed)+1] == 0 then pos_y += dir_y * speed end
+end
+
+function rotate(speed)
+  olddir_x = dir_x
+  dir_x = dir_x + cos(speed) - dir_y * sin(speed)
+  dir_y = olddir_x * sin(speed) + dir_y * cos(speed) 
+  oldplane_x = plane_x
+  plane_x = plane_x * cos(speed) - plane_y * sin(speed)
+  plane_y = oldplane_x * sin(speed) + plane_y * cos(speed)
+end
+
+function round(value)
+  if value % 1 < 0.5 then
+    return flr(value)
+  else
+    return flr(value) + 1
+  end
 end
 
 __gfx__
