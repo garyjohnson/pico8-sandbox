@@ -2,6 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
 
+PI=3.14159
+
 KEY_LEFT=0
 KEY_RIGHT=1
 KEY_UP=2
@@ -13,8 +15,9 @@ SCREEN_HEIGHT=128.0
 MAP_WIDTH=24.0
 MAP_HEIGHT=24.0
 
-MOVE_SPEED = 5 * 1/30
-ROTATE_SPEED = 3 * 1/30
+FPS = 1/30
+MOVE_SPEED = 5 * FPS
+ROTATE_SPEED = 0.5 * FPS
 
 ROOF_COLOR=5
 FLOOR_COLOR=6
@@ -62,6 +65,8 @@ dir_y=0.0
 
 plane_x=0.0
 plane_y=0.66
+
+printh('dir_x:'..dir_x..', dir_y:'..dir_y..', plane_x:'..plane_x..', plane_y:'..plane_y)
   
 function _update() 
   if btn(KEY_UP) then
@@ -71,9 +76,9 @@ function _update()
   end
 
   if btn(KEY_LEFT) then
-    rotate(-ROTATE_SPEED)
-  elseif btn(KEY_RIGHT) then
     rotate(ROTATE_SPEED)
+  elseif btn(KEY_RIGHT) then
+    rotate(-ROTATE_SPEED)
   end
 end
 
@@ -96,7 +101,8 @@ function _draw()
     if raydir_x < 0 then
       step_x = -1
       sidedist_x = (raypos_x - map_x) * deltadist_x
-    elseif raydir_x > 0 then
+    --elseif raydir_x > 0 then
+    else
       step_x = 1
       sidedist_x = (map_x + 1 - raypos_x) * deltadist_x
     end
@@ -104,7 +110,8 @@ function _draw()
     if raydir_y < 0 then
       step_y = -1
       sidedist_y = (raypos_y - map_y) * deltadist_y
-    elseif raydir_y > 0 then
+    --elseif raydir_y > 0 then
+    else
       step_y = 1
       sidedist_y = (map_y + 1 - raypos_y) * deltadist_y
     end
@@ -150,12 +157,17 @@ function move(speed)
 end
 
 function rotate(speed)
-  olddir_x = dir_x
-  dir_x = dir_x + cos(speed) - dir_y * sin(speed)
-  dir_y = olddir_x * sin(speed) + dir_y * cos(speed) 
-  oldplane_x = plane_x
-  plane_x = plane_x * cos(speed) - plane_y * sin(speed)
-  plane_y = oldplane_x * sin(speed) + plane_y * cos(speed)
+  new_dir_x = dir_x * cos(speed) + dir_y * -sin(-speed)
+  new_dir_y = dir_x * sin(-speed) + dir_y * cos(speed) 
+  dir_x = new_dir_x
+  dir_y = new_dir_y
+  
+  new_plane_x = plane_x * cos(speed) + plane_y * -sin(-speed)
+  new_plane_y = plane_x * sin(-speed) + plane_y * cos(speed)
+  plane_x = new_plane_x
+  plane_y = new_plane_y
+
+  printh('dir_x:'..dir_x..', dir_y:'..dir_y..', plane_x:'..plane_x..', plane_y:'..plane_y)
 end
 
 function round(value)
